@@ -129,11 +129,13 @@ pub async fn run_event_loop(
 
                                 log::debug!("Improved text: {:?}", improved);
 
-                                // Build output text
+                                // Build output text (strip newlines to avoid triggering send in chat tools)
+                                let improved_clean = improved.replace('\n', "  ");
                                 let output = if show_original {
-                                    format!("{}\n\n{}", text, improved)
+                                    let text_clean = text.replace('\n', "  ");
+                                    format!("{} | {}", text_clean, improved_clean)
                                 } else {
-                                    improved
+                                    improved_clean
                                 };
 
                                 // Type the text
