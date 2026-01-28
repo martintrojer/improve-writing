@@ -31,6 +31,10 @@ struct Args {
     /// Enable verbose logging
     #[arg(long)]
     verbose: bool,
+
+    /// Output original text followed by improved text
+    #[arg(long)]
+    show_original: bool,
 }
 
 #[tokio::main]
@@ -71,7 +75,7 @@ async fn main() -> Result<()> {
     })?;
 
     // Run the event loop
-    event_loop::run_event_loop(keyboards, hotkey, improver, running).await?;
+    event_loop::run_event_loop(keyboards, hotkey, improver, running, args.show_original).await?;
 
     log::info!("Goodbye!");
     Ok(())

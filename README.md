@@ -45,6 +45,12 @@ ollama pull qwen3:1.7b
 cargo build --release
 ```
 
+## Installation
+
+```bash
+cargo install --path .
+```
+
 ## Usage
 
 ```bash
@@ -61,6 +67,9 @@ cargo build --release
 
 # Verbose logging
 ./target/release/improve-writing --verbose
+
+# Show original text followed by improved text
+./target/release/improve-writing --show-original
 ```
 
 ## Options
@@ -72,6 +81,7 @@ cargo build --release
 | `--ollama-port` | `11434` | Ollama port |
 | `--ollama-model` | `qwen3:1.7b` | Ollama model to use |
 | `--verbose` | off | Enable debug logging |
+| `--show-original` | off | Output original text followed by improved text |
 
 ## License
 

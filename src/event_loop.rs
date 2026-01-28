@@ -94,6 +94,7 @@ pub async fn run_event_loop(
     hotkey: Hotkey,
     improver: TextImprover,
     running: Arc<AtomicBool>,
+    show_original: bool,
 ) -> Result<()> {
     let (tx, rx): (Sender<HotkeyEvent>, Receiver<HotkeyEvent>) = mpsc::channel();
 
@@ -128,8 +129,15 @@ pub async fn run_event_loop(
 
                                 log::info!("Improved text: {:?}", improved);
 
-                                // Type the improved text
-                                if let Err(e) = type_text(&improved).await {
+                                // Build output text
+                                let output = if show_original {
+                                    format!("{}\n\n{}", text, improved)
+                                } else {
+                                    improved
+                                };
+
+                                // Type the text
+                                if let Err(e) = type_text(&output).await {
                                     log::error!("Failed to type text: {}", e);
                                 }
                             }

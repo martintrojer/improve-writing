@@ -13,6 +13,15 @@ cargo run                # Run with defaults
 cargo run -- --verbose   # Run with debug logging
 ```
 
+## Before Committing
+
+Always run formatting and linting before committing:
+
+```bash
+cargo fmt
+cargo clippy
+```
+
 ## Project Structure
 
 ```
