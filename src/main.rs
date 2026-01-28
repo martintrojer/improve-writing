@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 #[command(about = "Hotkey-triggered text improvement via Ollama")]
 struct Args {
     /// Hotkey to trigger text improvement (e.g., F9, Shift+F9, Ctrl+Alt+F1)
-    #[arg(long, default_value = "Shift+F10")]
+    #[arg(long, default_value = "F8")]
     key: String,
 
     /// Ollama host URL
@@ -50,16 +50,16 @@ async fn main() -> Result<()> {
 
     // Parse hotkey
     let hotkey = input::parse_hotkey(&args.key)?;
-    log::info!("Using hotkey: {}", args.key);
+    log::debug!("Using hotkey: {}", args.key);
 
     // Find keyboards
     let keyboards = input::find_keyboards()?;
-    log::info!("Found {} keyboard(s)", keyboards.len());
+    log::debug!("Found {} keyboard(s)", keyboards.len());
 
     // Create text improver
     let improver =
         ollama::TextImprover::new(&args.ollama_host, args.ollama_port, &args.ollama_model);
-    log::info!(
+    log::debug!(
         "Using Ollama at {}:{} with model {}",
         args.ollama_host,
         args.ollama_port,

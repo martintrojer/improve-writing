@@ -55,7 +55,7 @@ impl TextImprover {
             match self.ollama.send_chat_messages(request.clone()).await {
                 Ok(response) => {
                     let improved = response.message.content.trim().to_string();
-                    log::info!(
+                    log::debug!(
                         "Ollama improved text in {:?}: {:?} -> {:?}",
                         start.elapsed(),
                         text,

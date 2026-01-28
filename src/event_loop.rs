@@ -106,7 +106,7 @@ pub async fn run_event_loop(
         // Check for hotkey events
         match rx.recv_timeout(Duration::from_millis(100)) {
             Ok(HotkeyEvent::Triggered) => {
-                log::info!("Hotkey pressed - getting selection and improving...");
+                log::debug!("Hotkey pressed - getting selection and improving...");
 
                 // Get highlighted text
                 match get_primary_selection().await {
@@ -117,7 +117,7 @@ pub async fn run_event_loop(
                             continue;
                         }
 
-                        log::info!("Selected text: {:?}", text);
+                        log::debug!("Selected text: {:?}", text);
 
                         // Improve text via Ollama
                         match improver.improve(text).await {
@@ -127,7 +127,7 @@ pub async fn run_event_loop(
                                     continue;
                                 }
 
-                                log::info!("Improved text: {:?}", improved);
+                                log::debug!("Improved text: {:?}", improved);
 
                                 // Build output text
                                 let output = if show_original {
@@ -155,7 +155,7 @@ pub async fn run_event_loop(
                 // No event, continue loop
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => {
-                log::info!("Keyboard listener disconnected");
+                log::debug!("Keyboard listener disconnected");
                 break;
             }
         }

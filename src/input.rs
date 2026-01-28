@@ -81,7 +81,7 @@ pub fn find_keyboards() -> Result<Vec<Device>> {
                 .map(|keys| keys.contains(Key::KEY_A))
                 .unwrap_or(false)
             {
-                log::info!("Found keyboard: {:?} at {:?}", device.name(), path);
+                log::debug!("Found keyboard: {:?} at {:?}", device.name(), path);
                 keyboards.push(device);
             }
         }
