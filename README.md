@@ -4,7 +4,7 @@ A hotkey-triggered text improvement tool for Linux/Wayland. Select text, press a
 
 ## How it works
 
-1. Press the hotkey (default: `Shift+F9`)
+1. Press the hotkey (default: `Shift+F10`)
 2. The tool grabs highlighted text via `wl-paste --primary`
 3. Sends it to Ollama with a prompt to improve clarity, grammar, and style
 4. Types the improved text back via `wtype`
@@ -54,7 +54,7 @@ cargo install --path .
 ## Usage
 
 ```bash
-# Default settings (Shift+F9, qwen3:1.7b)
+# Default settings (Shift+F10, qwen3:1.7b)
 ./target/release/improve-writing
 
 # Custom hotkey
@@ -76,7 +76,7 @@ cargo install --path .
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--key` | `Shift+F9` | Hotkey to trigger (F1-F12, ScrollLock, Pause, Insert with optional Shift/Ctrl/Alt) |
+| `--key` | `Shift+F10` | Hotkey to trigger (F1-F12, ScrollLock, Pause, Insert with optional Shift/Ctrl/Alt) |
 | `--ollama-host` | `http://localhost` | Ollama host URL |
 | `--ollama-port` | `11434` | Ollama port |
 | `--ollama-model` | `qwen3:1.7b` | Ollama model to use |

@@ -53,5 +53,5 @@ src/
 2. Pull model: `ollama pull qwen3:1.7b`
 3. Run: `cargo run -- --verbose`
 4. Select text in any application
-5. Press Shift+F9
+5. Press Shift+F10
 6. Improved text is typed at cursor position

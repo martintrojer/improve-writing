@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 #[command(about = "Hotkey-triggered text improvement via Ollama")]
 struct Args {
     /// Hotkey to trigger text improvement (e.g., F9, Shift+F9, Ctrl+Alt+F1)
-    #[arg(long, default_value = "Shift+F9")]
+    #[arg(long, default_value = "Shift+F10")]
     key: String,
 
     /// Ollama host URL
