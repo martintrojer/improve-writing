@@ -106,7 +106,7 @@ pub async fn run_event_loop(
         // Check for hotkey events
         match rx.recv_timeout(Duration::from_millis(100)) {
             Ok(HotkeyEvent::Triggered) => {
-                log::debug!("Hotkey pressed - getting selection and improving...");
+                log::info!("Hotkey pressed - getting selection and improving...");
 
                 // Get highlighted text
                 match get_primary_selection().await {
