@@ -54,7 +54,12 @@ async fn main() -> Result<()> {
         Some(key) => Some(input::parse_hotkey(key)?),
         None => Some(hotkey.with_shift()),
     };
-    log::debug!("Using hotkey: {}", args.key);
+    log::info!("Hotkey: {}", args.key);
+    if let Some(ref so_key) = args.show_original_key {
+        log::info!("Show-original hotkey: {}", so_key);
+    } else {
+        log::info!("Show-original hotkey: Shift+{}", args.key);
+    }
 
     // Find keyboards
     let keyboards = input::find_keyboards()?;
