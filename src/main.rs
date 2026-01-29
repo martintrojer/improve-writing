@@ -16,6 +16,10 @@ struct Args {
     #[arg(long, default_value = "F8")]
     key: String,
 
+    /// Hotkey to output original + improved text (default: Shift+<key>)
+    #[arg(long)]
+    show_original_key: Option<String>,
+
     /// Ollama host URL
     #[arg(long, default_value = "http://localhost")]
     ollama_host: String,
@@ -31,10 +35,6 @@ struct Args {
     /// Enable verbose logging
     #[arg(long)]
     verbose: bool,
-
-    /// Output original text followed by improved text
-    #[arg(long)]
-    show_original: bool,
 }
 
 #[tokio::main]
@@ -48,8 +48,12 @@ async fn main() -> Result<()> {
         env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     }
 
-    // Parse hotkey
+    // Parse hotkeys
     let hotkey = input::parse_hotkey(&args.key)?;
+    let show_original_hotkey = match &args.show_original_key {
+        Some(key) => Some(input::parse_hotkey(key)?),
+        None => Some(hotkey.with_shift()),
+    };
     log::debug!("Using hotkey: {}", args.key);
 
     // Find keyboards
@@ -75,7 +79,7 @@ async fn main() -> Result<()> {
     })?;
 
     // Run the event loop
-    event_loop::run_event_loop(keyboards, hotkey, improver, running, args.show_original).await?;
+    event_loop::run_event_loop(keyboards, hotkey, show_original_hotkey, improver, running).await?;
 
     log::info!("Goodbye!");
     Ok(())

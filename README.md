@@ -4,10 +4,11 @@ A hotkey-triggered text improvement tool for Linux/Wayland. Select text, press a
 
 ## How it works
 
-1. Press the hotkey (default: `F8`)
-2. The tool grabs highlighted text via `wl-paste --primary`
-3. Sends it to Ollama with a prompt to improve clarity, grammar, and style
-4. Types the improved text back via `wtype`
+1. Press the hotkey (default: `F8`) to get improved text
+2. Press `Shift+F8` to get original + improved text
+3. The tool grabs highlighted text via `wl-paste --primary`
+4. Sends it to Ollama with a prompt to improve clarity, grammar, and style
+5. Types the improved text back via `wtype`
 
 ## Requirements
 
@@ -54,34 +55,32 @@ cargo install --path .
 ## Usage
 
 ```bash
-# Default settings (F8, qwen3:1.7b)
+# Default settings (F8 for improved, Shift+F8 for original+improved)
 ./target/release/improve-writing
 
-# Custom hotkey
+# Custom hotkey (Shift+<key> automatically set for show-original)
 ./target/release/improve-writing --key F10
-./target/release/improve-writing --key Ctrl+F9
-./target/release/improve-writing --key Ctrl+Alt+F1
+
+# Custom show-original hotkey
+./target/release/improve-writing --key F8 --show-original-key Ctrl+F8
 
 # Different model
 ./target/release/improve-writing --ollama-model qwen2.5:1.5b
 
 # Verbose logging
 ./target/release/improve-writing --verbose
-
-# Show original text followed by improved text
-./target/release/improve-writing --show-original
 ```
 
 ## Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--key` | `F8` | Hotkey to trigger (F1-F12, ScrollLock, Pause, Insert with optional Shift/Ctrl/Alt) |
+| `--key` | `F8` | Hotkey for improved text only |
+| `--show-original-key` | `Shift+<key>` | Hotkey for original + improved text |
 | `--ollama-host` | `http://localhost` | Ollama host URL |
 | `--ollama-port` | `11434` | Ollama port |
 | `--ollama-model` | `qwen3:1.7b` | Ollama model to use |
 | `--verbose` | off | Enable debug logging |
-| `--show-original` | off | Output original text followed by improved text |
 
 ## License
 

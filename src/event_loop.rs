@@ -14,12 +14,14 @@ use crate::output::{get_primary_selection, type_text};
 
 #[derive(Debug, Clone, Copy)]
 pub enum HotkeyEvent {
-    Triggered,
+    Improve,
+    ImproveShowOriginal,
 }
 
 fn start_keyboard_listener(
     mut keyboards: Vec<Device>,
     hotkey: Hotkey,
+    show_original_hotkey: Option<Hotkey>,
     running: Arc<AtomicBool>,
     tx: Sender<HotkeyEvent>,
 ) -> Result<()> {
@@ -67,15 +69,29 @@ fn start_keyboard_listener(
                                 _ => {}
                             }
 
-                            // Check if hotkey is triggered
+                            // Check show_original hotkey first (more specific)
+                            if let Some(ref so_hotkey) = show_original_hotkey
+                                && key == so_hotkey.key
+                                && pressed
+                            {
+                                let mods_match = current_mods.shift == so_hotkey.modifiers.shift
+                                    && current_mods.ctrl == so_hotkey.modifiers.ctrl
+                                    && current_mods.alt == so_hotkey.modifiers.alt;
+
+                                if mods_match {
+                                    let _ = tx.send(HotkeyEvent::ImproveShowOriginal);
+                                    continue;
+                                }
+                            }
+
+                            // Check normal hotkey
                             if key == hotkey.key && pressed {
-                                // Check if required modifiers match
                                 let mods_match = current_mods.shift == hotkey.modifiers.shift
                                     && current_mods.ctrl == hotkey.modifiers.ctrl
                                     && current_mods.alt == hotkey.modifiers.alt;
 
                                 if mods_match {
-                                    let _ = tx.send(HotkeyEvent::Triggered);
+                                    let _ = tx.send(HotkeyEvent::Improve);
                                 }
                             }
                         }
@@ -92,20 +108,21 @@ fn start_keyboard_listener(
 pub async fn run_event_loop(
     keyboards: Vec<Device>,
     hotkey: Hotkey,
+    show_original_hotkey: Option<Hotkey>,
     improver: TextImprover,
     running: Arc<AtomicBool>,
-    show_original: bool,
 ) -> Result<()> {
     let (tx, rx): (Sender<HotkeyEvent>, Receiver<HotkeyEvent>) = mpsc::channel();
 
-    start_keyboard_listener(keyboards, hotkey, running.clone(), tx)?;
+    start_keyboard_listener(keyboards, hotkey, show_original_hotkey, running.clone(), tx)?;
 
     log::info!("Listening for hotkey... Press Ctrl+C to exit.");
 
     while running.load(Ordering::Relaxed) {
         // Check for hotkey events
         match rx.recv_timeout(Duration::from_millis(100)) {
-            Ok(HotkeyEvent::Triggered) => {
+            Ok(event) => {
+                let show_original = matches!(event, HotkeyEvent::ImproveShowOriginal);
                 log::info!("Hotkey pressed - getting selection and improving...");
 
                 // Get highlighted text

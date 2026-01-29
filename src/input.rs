@@ -57,6 +57,20 @@ pub fn parse_hotkey(s: &str) -> Result<Hotkey> {
     Ok(Hotkey { key, modifiers })
 }
 
+impl Hotkey {
+    /// Create a new hotkey with shift modifier added
+    pub fn with_shift(&self) -> Hotkey {
+        Hotkey {
+            key: self.key,
+            modifiers: Modifiers {
+                shift: true,
+                ctrl: self.modifiers.ctrl,
+                alt: self.modifiers.alt,
+            },
+        }
+    }
+}
+
 /// Find all keyboard devices
 pub fn find_keyboards() -> Result<Vec<Device>> {
     let mut keyboards = Vec::new();
