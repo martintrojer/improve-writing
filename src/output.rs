@@ -16,6 +16,25 @@ pub async fn type_text(text: &str) -> Result<()> {
     Ok(())
 }
 
+/// Copy text to clipboard using wl-copy
+pub async fn copy_to_clipboard(text: &str) -> Result<()> {
+    use std::process::Stdio;
+    use tokio::process::Command as TokioCommand;
+
+    let mut child = TokioCommand::new("wl-copy")
+        .stdin(Stdio::piped())
+        .spawn()
+        .context("Failed to run wl-copy (is wl-clipboard installed?)")?;
+
+    if let Some(mut stdin) = child.stdin.take() {
+        use tokio::io::AsyncWriteExt;
+        stdin.write_all(text.as_bytes()).await?;
+    }
+
+    child.wait().await.context("wl-copy failed")?;
+    Ok(())
+}
+
 /// Get primary selection (highlighted text) using wl-paste
 pub async fn get_primary_selection() -> Result<String> {
     let output = Command::new("wl-paste")

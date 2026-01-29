@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 
 use crate::input::{Hotkey, Modifiers, find_keyboards};
 use crate::ollama::TextImprover;
-use crate::output::{get_primary_selection, type_text};
+use crate::output::{copy_to_clipboard, get_primary_selection, type_text};
 
 #[derive(Debug, Clone, Copy)]
 pub enum HotkeyEvent {
@@ -187,6 +187,13 @@ pub async fn run_event_loop(
                         }
 
                         log::debug!("Selected text: {:?}", text);
+
+                        // Copy original text to clipboard as backup
+                        if let Err(e) = copy_to_clipboard(text).await {
+                            log::warn!("Failed to copy original to clipboard: {}", e);
+                        } else {
+                            log::debug!("Original text copied to clipboard");
+                        }
 
                         // Improve text via Ollama
                         match improver.improve(text).await {
