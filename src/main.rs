@@ -1,10 +1,10 @@
 mod event_loop;
-mod input;
 mod ollama;
 mod output;
 
 use anyhow::Result;
 use clap::Parser;
+use hotkey_listener::{HotkeyListenerBuilder, parse_hotkey};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -49,21 +49,21 @@ async fn main() -> Result<()> {
     }
 
     // Parse hotkeys
-    let hotkey = input::parse_hotkey(&args.key)?;
+    let hotkey = parse_hotkey(&args.key)?;
     let show_original_hotkey = match &args.show_original_key {
-        Some(key) => Some(input::parse_hotkey(key)?),
-        None => Some(hotkey.with_shift()),
+        Some(key) => parse_hotkey(key)?,
+        None => hotkey.with_shift(),
     };
-    log::info!("Hotkey: {}", args.key);
-    if let Some(ref so_key) = args.show_original_key {
-        log::info!("Show-original hotkey: {}", so_key);
-    } else {
-        log::info!("Show-original hotkey: Shift+{}", args.key);
-    }
+    log::info!("Hotkey: {}", hotkey);
+    log::info!("Show-original hotkey: {}", show_original_hotkey);
 
-    // Find keyboards
-    let keyboards = input::find_keyboards()?;
-    log::debug!("Found {} keyboard(s)", keyboards.len());
+    // Build the hotkey listener
+    // Index 0 = main hotkey (improve only)
+    // Index 1 = show original hotkey (improve + show original)
+    let listener = HotkeyListenerBuilder::new()
+        .add_hotkey(hotkey)
+        .add_hotkey(show_original_hotkey)
+        .build()?;
 
     // Create text improver
     let improver =
@@ -84,7 +84,7 @@ async fn main() -> Result<()> {
     })?;
 
     // Run the event loop
-    event_loop::run_event_loop(keyboards, hotkey, show_original_hotkey, improver, running).await?;
+    event_loop::run_event_loop(listener, improver, running).await?;
 
     log::info!("Goodbye!");
     Ok(())
