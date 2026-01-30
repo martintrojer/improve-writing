@@ -57,13 +57,14 @@ async fn main() -> Result<()> {
     log::info!("Hotkey: {}", hotkey);
     log::info!("Show-original hotkey: {}", show_original_hotkey);
 
-    // Build the hotkey listener
+    // Build and start the hotkey listener
     // Index 0 = main hotkey (improve only)
     // Index 1 = show original hotkey (improve + show original)
-    let listener = HotkeyListenerBuilder::new()
+    let handle = HotkeyListenerBuilder::new()
         .add_hotkey(hotkey)
         .add_hotkey(show_original_hotkey)
-        .build()?;
+        .build()?
+        .start()?;
 
     // Create text improver
     let improver =
@@ -84,7 +85,7 @@ async fn main() -> Result<()> {
     })?;
 
     // Run the event loop
-    event_loop::run_event_loop(listener, improver, running).await?;
+    event_loop::run_event_loop(handle, improver, running).await?;
 
     log::info!("Goodbye!");
     Ok(())

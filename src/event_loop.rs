@@ -1,5 +1,5 @@
 use anyhow::Result;
-use hotkey_listener::{HotkeyEvent, HotkeyListener};
+use hotkey_listener::{HotkeyEvent, HotkeyListenerHandle};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
@@ -8,17 +8,15 @@ use crate::ollama::TextImprover;
 use crate::output::{copy_to_clipboard, get_primary_selection, type_text};
 
 pub async fn run_event_loop(
-    listener: HotkeyListener,
+    handle: HotkeyListenerHandle,
     improver: TextImprover,
     running: Arc<AtomicBool>,
 ) -> Result<()> {
-    let rx = listener.start(running.clone())?;
-
     log::info!("Listening for hotkey... Press Ctrl+C to exit.");
 
     while running.load(Ordering::Relaxed) {
         // Check for hotkey events
-        match rx.recv_timeout(Duration::from_millis(100)) {
+        match handle.recv_timeout(Duration::from_millis(100)) {
             Ok(event) => {
                 // Index 0 = main hotkey (improve only)
                 // Index 1 = show original hotkey (improve + show original)
