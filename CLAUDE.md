@@ -50,7 +50,7 @@ src/
 ## Testing Manually
 
 1. Ensure Ollama is running: `ollama serve`
-2. Pull model: `ollama pull qwen3:1.7b`
+2. Pull model: `ollama pull qwen3:1.7b` (also a particularly good choice: `qwen3:4b-instruct`)
 3. Run: `cargo run -- --verbose`
 4. Select text in any application
 5. Press F8 for improved text, or Shift+F8 for original + improved

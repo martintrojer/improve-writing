@@ -38,6 +38,8 @@ sudo usermod -aG input $USER
 
 ```bash
 ollama pull qwen3:1.7b
+# Also a particularly good choice:
+ollama pull qwen3:4b-instruct
 ```
 
 ## Building
@@ -79,7 +81,7 @@ cargo install --path .
 | `--show-original-key` | `Shift+<key>` | Hotkey for original + improved text |
 | `--ollama-host` | `http://localhost` | Ollama host URL |
 | `--ollama-port` | `11434` | Ollama port |
-| `--ollama-model` | `qwen3:1.7b` | Ollama model to use |
+| `--ollama-model` | `qwen3:1.7b` | Ollama model to use (also a particularly good choice: `qwen3:4b-instruct`) |
 | `--verbose` | off | Enable debug logging |
 
 ## License
