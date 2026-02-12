@@ -1,38 +1,40 @@
 # improve-writing
 
-A hotkey-triggered text improvement tool for Linux/Wayland. Select text, press a hotkey, and get an improved version typed back via Ollama.
+A hotkey-triggered text improvement tool for Linux (Wayland) and macOS. Select text, press a hotkey, and get an improved version typed back via Ollama.
 
 ## How it works
 
 1. Press the hotkey (default: `F8`) to get improved text
 2. Press `Shift+F8` to get original + improved text
-3. The tool grabs highlighted text via `wl-paste --primary`
+3. The tool grabs highlighted text (via `wl-paste --primary` on Linux, or simulated `Cmd+C` on macOS)
 4. Sends it to Ollama with a prompt to improve clarity, grammar, and style
-5. Types the improved text back via `wtype`
+5. Types the improved text back (via `wtype` on Linux, or `osascript` on macOS)
 
 ## Requirements
 
-- Linux with Wayland
-- `wl-clipboard` (provides `wl-paste`)
-- `wtype` (for typing text)
 - [Ollama](https://ollama.ai/) running with a model pulled
-- User must be in the `input` group (or run as root) for keyboard access
 
-### Install dependencies (Fedora)
+### Linux (Wayland)
+
+- `wl-clipboard` (provides `wl-paste`/`wl-copy`)
+- `wtype` (for typing text)
+
+#### Install dependencies (Fedora)
 
 ```bash
 sudo dnf install wl-clipboard wtype
-sudo usermod -aG input $USER
-# Log out and back in for group change to take effect
 ```
 
-### Install dependencies (Ubuntu/Debian)
+#### Install dependencies (Ubuntu/Debian)
 
 ```bash
 sudo apt install wl-clipboard wtype
-sudo usermod -aG input $USER
-# Log out and back in for group change to take effect
 ```
+
+### macOS
+
+- Grant Accessibility permissions to your terminal (System Settings > Privacy & Security > Accessibility)
+- `pbcopy`/`pbpaste` (built-in) and `osascript` (built-in) are used automatically
 
 ### Install Ollama model
 

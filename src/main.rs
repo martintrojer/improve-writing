@@ -57,6 +57,9 @@ async fn main() -> Result<()> {
     log::info!("Hotkey: {}", hotkey);
     log::info!("Show-original hotkey: {}", show_original_hotkey);
 
+    #[cfg(target_os = "macos")]
+    log::info!("Note: You may need to grant Accessibility permissions for osascript to type text.");
+
     // Build and start the hotkey listener
     // Index 0 = main hotkey (improve only)
     // Index 1 = show original hotkey (improve + show original)

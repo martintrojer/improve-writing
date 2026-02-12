@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-improve-writing is a Rust CLI tool that listens for a global hotkey, grabs highlighted text via Wayland primary selection, sends it to Ollama for improvement, and types the result back.
+improve-writing is a Rust CLI tool that listens for a global hotkey, grabs selected text, sends it to Ollama for improvement, and types the result back. Supports Linux (Wayland) and macOS.
 
 ## Build & Run
 
@@ -30,24 +30,31 @@ src/
 ├── input.rs       # Hotkey parsing, keyboard device discovery (evdev)
 ├── event_loop.rs  # Main loop, modifier tracking, hotkey detection
 ├── ollama.rs      # Ollama API integration (TextImprover)
-├── output.rs      # wl-paste (get selection) and wtype (type text)
+├── output.rs      # Clipboard and typing (wl-paste/wtype on Linux, pbpaste/pbcopy/osascript on macOS)
 ```
 
 ## Key Dependencies
 
-- `evdev` - Linux keyboard input via /dev/input
+- `hotkey-listener` - Cross-platform global hotkey listening
 - `ollama-rs` - Ollama API client
 - `tokio` - Async runtime
 - `clap` - CLI argument parsing
+
+### Platform-specific
+
+- **Linux (Wayland):** `wl-paste`/`wl-copy` (wl-clipboard) and `wtype` for clipboard/typing
+- **macOS:** `pbpaste`/`pbcopy` (built-in) and `osascript` for typing via AppleScript
 
 ## Architecture Notes
 
 - Keyboard listener runs in a separate thread, communicates via mpsc channel
 - Modifier keys (Shift/Ctrl/Alt) are tracked to support hotkey combinations
 - Ollama client uses custom reqwest settings: 120s timeout, disabled connection pooling, 3 retries
-- Linux-only (Wayland) - uses wl-paste/wtype for clipboard/typing
+- Platform-specific output via `#[cfg(target_os = "...")]` in `output.rs`
 
 ## Testing Manually
+
+### Linux (Wayland)
 
 1. Ensure Ollama is running: `ollama serve`
 2. Pull model: `ollama pull qwen3:1.7b` (also a particularly good choice: `qwen3:4b-instruct`)
@@ -55,3 +62,13 @@ src/
 4. Select text in any application
 5. Press F8 for improved text, or Shift+F8 for original + improved
 6. Improved text is typed at cursor position
+
+### macOS
+
+1. Ensure Ollama is running: `ollama serve`
+2. Pull model: `ollama pull qwen3:1.7b` (also a particularly good choice: `qwen3:4b-instruct`)
+3. Grant Accessibility permissions to your terminal (System Settings > Privacy & Security > Accessibility)
+4. Run: `cargo run -- --verbose`
+5. Select text in any application
+6. Press F8 for improved text, or Shift+F8 for original + improved
+7. Improved text is typed at cursor position
