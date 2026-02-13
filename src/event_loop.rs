@@ -13,9 +13,22 @@ enum Mode {
     ShellCommand,
 }
 
+/// Check for the REDO keyword (whole word, all-caps). Returns the cleaned text
+/// with REDO stripped and whether refinement was requested.
+fn extract_refine(text: &str) -> (String, bool) {
+    let re = regex::Regex::new(r"\bREDO\b").unwrap();
+    if re.is_match(text) {
+        let cleaned = re.replace_all(text, "");
+        let cleaned = cleaned.split_whitespace().collect::<Vec<_>>().join(" ");
+        (cleaned, true)
+    } else {
+        (text.to_string(), false)
+    }
+}
+
 pub async fn run_event_loop(
     handle: HotkeyListenerHandle,
-    improver: TextImprover,
+    mut improver: TextImprover,
     running: Arc<AtomicBool>,
 ) -> Result<()> {
     log::info!("Listening for hotkey... Press Ctrl+C to exit.");
@@ -55,8 +68,13 @@ pub async fn run_event_loop(
                         match mode {
                             Mode::Improve | Mode::ImproveShowOriginal => {
                                 let show_original = matches!(mode, Mode::ImproveShowOriginal);
+                                let (input, refine) = if show_original {
+                                    (text.to_string(), false)
+                                } else {
+                                    extract_refine(text)
+                                };
 
-                                match improver.improve(text).await {
+                                match improver.improve(&input, refine).await {
                                     Ok(improved) => {
                                         if improved.is_empty() {
                                             log::warn!("Ollama returned empty response");
@@ -82,27 +100,30 @@ pub async fn run_event_loop(
                                     }
                                 }
                             }
-                            Mode::ShellCommand => match improver.generate_command(text).await {
-                                Ok(command) => {
-                                    if command.is_empty() {
-                                        log::warn!("Ollama returned empty response");
-                                        continue;
+                            Mode::ShellCommand => {
+                                let (input, refine) = extract_refine(text);
+                                match improver.generate_command(&input, refine).await {
+                                    Ok(command) => {
+                                        if command.is_empty() {
+                                            log::warn!("Ollama returned empty response");
+                                            continue;
+                                        }
+
+                                        log::debug!("Generated command: {:?}", command);
+
+                                        if let Err(e) = clear_line().await {
+                                            log::error!("Failed to clear line: {}", e);
+                                        }
+
+                                        if let Err(e) = type_text(&command).await {
+                                            log::error!("Failed to type command: {}", e);
+                                        }
                                     }
-
-                                    log::debug!("Generated command: {:?}", command);
-
-                                    if let Err(e) = clear_line().await {
-                                        log::error!("Failed to clear line: {}", e);
-                                    }
-
-                                    if let Err(e) = type_text(&command).await {
-                                        log::error!("Failed to type command: {}", e);
+                                    Err(e) => {
+                                        log::error!("Failed to generate command: {}", e);
                                     }
                                 }
-                                Err(e) => {
-                                    log::error!("Failed to generate command: {}", e);
-                                }
-                            },
+                            }
                         }
                     }
                     Err(e) => {

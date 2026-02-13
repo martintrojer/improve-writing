@@ -12,6 +12,7 @@ clap = { version = "4", features = ["derive"] }
 reqwest = { version = "0.12", features = ["stream"] }
 ctrlc = "3"
 anyhow = "1"
+regex = "1"
 log = "0.4"
 env_logger = "0.11"
 

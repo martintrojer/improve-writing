@@ -19,6 +19,7 @@ If multiple commands are needed, combine them on a single line using && or pipes
 pub struct TextImprover {
     ollama: Ollama,
     model: String,
+    history: Vec<ChatMessage>,
 }
 
 impl TextImprover {
@@ -34,28 +35,38 @@ impl TextImprover {
         Self {
             ollama: Ollama::new_with_client(host.to_string(), port, client),
             model: model.to_string(),
+            history: Vec::new(),
         }
     }
 
-    pub async fn improve(&self, text: &str) -> Result<String> {
-        self.send_chat(DEFAULT_PROMPT, text).await
+    pub async fn improve(&mut self, text: &str, refine: bool) -> Result<String> {
+        self.send_chat(DEFAULT_PROMPT, text, refine).await
     }
 
-    pub async fn generate_command(&self, description: &str) -> Result<String> {
-        self.send_chat(COMMAND_PROMPT, description).await
+    pub async fn generate_command(&mut self, description: &str, refine: bool) -> Result<String> {
+        self.send_chat(COMMAND_PROMPT, description, refine).await
     }
 
-    async fn send_chat(&self, system_prompt: &str, user_text: &str) -> Result<String> {
+    async fn send_chat(
+        &mut self,
+        system_prompt: &str,
+        user_text: &str,
+        refine: bool,
+    ) -> Result<String> {
         if user_text.trim().is_empty() {
             return Ok(String::new());
         }
 
-        let messages = vec![
-            ChatMessage::system(system_prompt.to_string()),
-            ChatMessage::user(user_text.to_string()),
-        ];
+        if refine && !self.history.is_empty() {
+            self.history.push(ChatMessage::user(user_text.to_string()));
+        } else {
+            self.history.clear();
+            self.history
+                .push(ChatMessage::system(system_prompt.to_string()));
+            self.history.push(ChatMessage::user(user_text.to_string()));
+        }
 
-        let request = ChatMessageRequest::new(self.model.clone(), messages)
+        let request = ChatMessageRequest::new(self.model.clone(), self.history.clone())
             .think(false)
             .keep_alive(KeepAlive::Indefinitely);
 
@@ -78,6 +89,7 @@ impl TextImprover {
                         user_text,
                         result
                     );
+                    self.history.push(ChatMessage::assistant(result.clone()));
                     return Ok(result);
                 }
                 Err(e) => {
