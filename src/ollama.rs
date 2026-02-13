@@ -11,6 +11,11 @@ Keep the original meaning and tone.
 Only output the improved text, nothing else.
 Do not add explanations or commentary."#;
 
+const COMMAND_PROMPT: &str = r#"Convert the following description into a shell command.
+Output only the command, nothing else.
+Do not add explanations, commentary, or markdown formatting.
+If multiple commands are needed, combine them on a single line using && or pipes."#;
+
 pub struct TextImprover {
     ollama: Ollama,
     model: String,
@@ -33,13 +38,21 @@ impl TextImprover {
     }
 
     pub async fn improve(&self, text: &str) -> Result<String> {
-        if text.trim().is_empty() {
+        self.send_chat(DEFAULT_PROMPT, text).await
+    }
+
+    pub async fn generate_command(&self, description: &str) -> Result<String> {
+        self.send_chat(COMMAND_PROMPT, description).await
+    }
+
+    async fn send_chat(&self, system_prompt: &str, user_text: &str) -> Result<String> {
+        if user_text.trim().is_empty() {
             return Ok(String::new());
         }
 
         let messages = vec![
-            ChatMessage::system(DEFAULT_PROMPT.to_string()),
-            ChatMessage::user(text.to_string()),
+            ChatMessage::system(system_prompt.to_string()),
+            ChatMessage::user(user_text.to_string()),
         ];
 
         let request = ChatMessageRequest::new(self.model.clone(), messages)
@@ -50,18 +63,22 @@ impl TextImprover {
         let mut last_error = None;
         for attempt in 1..=3 {
             let start = Instant::now();
-            log::debug!("Ollama request attempt {} for text: {:?}", attempt, text);
+            log::debug!(
+                "Ollama request attempt {} for text: {:?}",
+                attempt,
+                user_text
+            );
 
             match self.ollama.send_chat_messages(request.clone()).await {
                 Ok(response) => {
-                    let improved = response.message.content.trim().to_string();
+                    let result = response.message.content.trim().to_string();
                     log::debug!(
-                        "Ollama improved text in {:?}: {:?} -> {:?}",
+                        "Ollama response in {:?}: {:?} -> {:?}",
                         start.elapsed(),
-                        text,
-                        improved
+                        user_text,
+                        result
                     );
-                    return Ok(improved);
+                    return Ok(result);
                 }
                 Err(e) => {
                     log::warn!("Ollama attempt {} failed: {}", attempt, e);

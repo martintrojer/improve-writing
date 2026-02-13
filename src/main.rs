@@ -20,6 +20,10 @@ struct Args {
     #[arg(long)]
     show_original_key: Option<String>,
 
+    /// Hotkey to generate a shell command from a description
+    #[arg(long, default_value = "F7")]
+    cmd_key: String,
+
     /// Ollama host URL
     #[arg(long, default_value = "http://localhost")]
     ollama_host: String,
@@ -57,15 +61,20 @@ async fn main() -> Result<()> {
     log::info!("Hotkey: {}", hotkey);
     log::info!("Show-original hotkey: {}", show_original_hotkey);
 
+    let cmd_hotkey = parse_hotkey(&args.cmd_key)?;
+    log::info!("Shell command hotkey: {}", cmd_hotkey);
+
     #[cfg(target_os = "macos")]
     log::info!("Note: You may need to grant Accessibility permissions for osascript to type text.");
 
     // Build and start the hotkey listener
     // Index 0 = main hotkey (improve only)
     // Index 1 = show original hotkey (improve + show original)
+    // Index 2 = shell command hotkey (generate command)
     let handle = HotkeyListenerBuilder::new()
         .add_hotkey(hotkey)
         .add_hotkey(show_original_hotkey)
+        .add_hotkey(cmd_hotkey)
         .build()?
         .start()?;
 

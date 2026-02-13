@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-improve-writing is a Rust CLI tool that listens for a global hotkey, grabs selected text, sends it to Ollama for improvement, and types the result back. Supports Linux (Wayland) and macOS.
+improve-writing is a Rust CLI tool that listens for global hotkeys, grabs selected text, sends it to Ollama for improvement or shell command generation, and types the result back. Supports Linux (Wayland) and macOS.
 
 ## Build & Run
 
@@ -27,10 +27,9 @@ cargo clippy
 ```
 src/
 ├── main.rs        # Entry point, CLI args, initialization
-├── input.rs       # Hotkey parsing, keyboard device discovery (evdev)
-├── event_loop.rs  # Main loop, modifier tracking, hotkey detection
-├── ollama.rs      # Ollama API integration (TextImprover)
-├── output.rs      # Clipboard and typing (wl-paste/wtype on Linux, pbpaste/pbcopy/osascript on macOS)
+├── event_loop.rs  # Main loop, hotkey detection, mode dispatch (improve/command)
+├── ollama.rs      # Ollama API integration (TextImprover: improve text, generate commands)
+├── output.rs      # Clipboard, typing, and line clearing (wl-paste/wtype on Linux, pbpaste/pbcopy/osascript on macOS)
 ```
 
 ## Key Dependencies
@@ -50,6 +49,7 @@ src/
 - Keyboard listener runs in a separate thread, communicates via mpsc channel
 - Modifier keys (Shift/Ctrl/Alt) are tracked to support hotkey combinations
 - Ollama client uses custom reqwest settings: 120s timeout, disabled connection pooling, 3 retries
+- Shared `send_chat` method handles retries for both text improvement and command generation prompts
 - Platform-specific output via `#[cfg(target_os = "...")]` in `output.rs`
 
 ## Testing Manually
@@ -62,6 +62,8 @@ src/
 4. Select text in any application
 5. Press F8 for improved text, or Shift+F8 for original + improved
 6. Improved text is typed at cursor position
+7. In a terminal, type a command description, select it, press F7
+8. The line is cleared and the generated shell command is typed
 
 ### macOS
 
@@ -72,3 +74,5 @@ src/
 5. Select text in any application
 6. Press F8 for improved text, or Shift+F8 for original + improved
 7. Improved text is typed at cursor position
+8. In a terminal, type a command description, select it, press F7
+9. The line is cleared and the generated shell command is typed

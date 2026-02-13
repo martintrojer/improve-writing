@@ -6,9 +6,10 @@ A hotkey-triggered text improvement tool for Linux (Wayland) and macOS. Select t
 
 1. Press the hotkey (default: `F8`) to get improved text
 2. Press `Shift+F8` to get original + improved text
-3. The tool grabs highlighted text (via `wl-paste --primary` on Linux, or simulated `Cmd+C` on macOS)
-4. Sends it to Ollama with a prompt to improve clarity, grammar, and style
-5. Types the improved text back (via `wtype` on Linux, or `osascript` on macOS)
+3. Press `F7` to generate a shell command from a natural language description
+4. The tool grabs highlighted text (via `wl-paste --primary` on Linux, or simulated `Cmd+C` on macOS)
+5. Sends it to Ollama with an appropriate prompt (text improvement or command generation)
+6. Types the result back (via `wtype` on Linux, or `osascript` on macOS)
 
 ## Requirements
 
@@ -59,7 +60,7 @@ cargo install --path .
 ## Usage
 
 ```bash
-# Default settings (F8 for improved, Shift+F8 for original+improved)
+# Default settings (F8 for improved, Shift+F8 for original+improved, F7 for shell command)
 ./target/release/improve-writing
 
 # Custom hotkey (Shift+<key> automatically set for show-original)
@@ -67,6 +68,9 @@ cargo install --path .
 
 # Custom show-original hotkey
 ./target/release/improve-writing --key F8 --show-original-key Ctrl+F8
+
+# Custom shell command hotkey
+./target/release/improve-writing --cmd-key F6
 
 # Different model
 ./target/release/improve-writing --ollama-model qwen2.5:1.5b
@@ -81,6 +85,7 @@ cargo install --path .
 |--------|---------|-------------|
 | `--key` | `F8` | Hotkey for improved text only |
 | `--show-original-key` | `Shift+<key>` | Hotkey for original + improved text |
+| `--cmd-key` | `F7` | Hotkey for shell command generation |
 | `--ollama-host` | `http://localhost` | Ollama host URL |
 | `--ollama-port` | `11434` | Ollama port |
 | `--ollama-model` | `qwen3:1.7b` | Ollama model to use (also a particularly good choice: `qwen3:4b-instruct`) |

@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use std::process::Stdio;
+use std::time::Duration;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 
@@ -123,4 +124,33 @@ pub async fn get_primary_selection() -> Result<String> {
 
     let text = String::from_utf8_lossy(&output.stdout).to_string();
     Ok(text)
+}
+
+/// Clear the current terminal line by sending Ctrl+U.
+///
+/// - Linux: uses `wtype` to simulate Ctrl+U
+/// - macOS: uses `osascript` to simulate Ctrl+U
+#[cfg(target_os = "linux")]
+pub async fn clear_line() -> Result<()> {
+    Command::new("wtype")
+        .args(["-M", "ctrl", "-k", "u", "-m", "ctrl"])
+        .status()
+        .await
+        .context("Failed to clear line (is wtype installed?)")?;
+
+    tokio::time::sleep(Duration::from_millis(50)).await;
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+pub async fn clear_line() -> Result<()> {
+    Command::new("osascript")
+        .arg("-e")
+        .arg(r#"tell application "System Events" to keystroke "u" using control down"#)
+        .status()
+        .await
+        .context("Failed to clear line via osascript (check Accessibility permissions)")?;
+
+    tokio::time::sleep(Duration::from_millis(50)).await;
+    Ok(())
 }

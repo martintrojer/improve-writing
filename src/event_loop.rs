@@ -5,7 +5,13 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use crate::ollama::TextImprover;
-use crate::output::{copy_to_clipboard, get_primary_selection, type_text};
+use crate::output::{clear_line, copy_to_clipboard, get_primary_selection, type_text};
+
+enum Mode {
+    Improve,
+    ImproveShowOriginal,
+    ShellCommand,
+}
 
 pub async fn run_event_loop(
     handle: HotkeyListenerHandle,
@@ -18,16 +24,15 @@ pub async fn run_event_loop(
         // Check for hotkey events
         match handle.recv_timeout(Duration::from_millis(100)) {
             Ok(event) => {
-                // Index 0 = main hotkey (improve only)
-                // Index 1 = show original hotkey (improve + show original)
-                let show_original = matches!(event, HotkeyEvent::Pressed(1));
-
                 // Only handle press events, not releases
-                if !matches!(event, HotkeyEvent::Pressed(_)) {
-                    continue;
-                }
+                let mode = match event {
+                    HotkeyEvent::Pressed(0) => Mode::Improve,
+                    HotkeyEvent::Pressed(1) => Mode::ImproveShowOriginal,
+                    HotkeyEvent::Pressed(2) => Mode::ShellCommand,
+                    _ => continue,
+                };
 
-                log::info!("Hotkey pressed - getting selection and improving...");
+                log::info!("Hotkey pressed - getting selection...");
 
                 // Get highlighted text
                 match get_primary_selection().await {
@@ -47,33 +52,57 @@ pub async fn run_event_loop(
                             log::debug!("Original text copied to clipboard");
                         }
 
-                        // Improve text via Ollama
-                        match improver.improve(text).await {
-                            Ok(improved) => {
-                                if improved.is_empty() {
-                                    log::warn!("Ollama returned empty response");
-                                    continue;
-                                }
+                        match mode {
+                            Mode::Improve | Mode::ImproveShowOriginal => {
+                                let show_original = matches!(mode, Mode::ImproveShowOriginal);
 
-                                log::debug!("Improved text: {:?}", improved);
+                                match improver.improve(text).await {
+                                    Ok(improved) => {
+                                        if improved.is_empty() {
+                                            log::warn!("Ollama returned empty response");
+                                            continue;
+                                        }
 
-                                // Build output text (strip newlines to avoid triggering send in chat tools)
-                                let improved_clean = improved.replace('\n', "  ");
-                                let output = if show_original {
-                                    let text_clean = text.replace('\n', "  ");
-                                    format!("{} | {}", text_clean, improved_clean)
-                                } else {
-                                    improved_clean
-                                };
+                                        log::debug!("Improved text: {:?}", improved);
 
-                                // Type the text
-                                if let Err(e) = type_text(&output).await {
-                                    log::error!("Failed to type text: {}", e);
+                                        let improved_clean = improved.replace('\n', "  ");
+                                        let output = if show_original {
+                                            let text_clean = text.replace('\n', "  ");
+                                            format!("{} | {}", text_clean, improved_clean)
+                                        } else {
+                                            improved_clean
+                                        };
+
+                                        if let Err(e) = type_text(&output).await {
+                                            log::error!("Failed to type text: {}", e);
+                                        }
+                                    }
+                                    Err(e) => {
+                                        log::error!("Failed to improve text: {}", e);
+                                    }
                                 }
                             }
-                            Err(e) => {
-                                log::error!("Failed to improve text: {}", e);
-                            }
+                            Mode::ShellCommand => match improver.generate_command(text).await {
+                                Ok(command) => {
+                                    if command.is_empty() {
+                                        log::warn!("Ollama returned empty response");
+                                        continue;
+                                    }
+
+                                    log::debug!("Generated command: {:?}", command);
+
+                                    if let Err(e) = clear_line().await {
+                                        log::error!("Failed to clear line: {}", e);
+                                    }
+
+                                    if let Err(e) = type_text(&command).await {
+                                        log::error!("Failed to type command: {}", e);
+                                    }
+                                }
+                                Err(e) => {
+                                    log::error!("Failed to generate command: {}", e);
+                                }
+                            },
                         }
                     }
                     Err(e) => {
