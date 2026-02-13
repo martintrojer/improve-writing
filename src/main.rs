@@ -6,7 +6,7 @@ use anyhow::Result;
 use clap::Parser;
 use hotkey_listener::{HotkeyListenerBuilder, parse_hotkey};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering::Release};
 
 #[derive(Parser, Debug)]
 #[command(name = "improve-writing")]
@@ -93,7 +93,7 @@ async fn main() -> Result<()> {
     let r = running.clone();
     ctrlc::set_handler(move || {
         log::info!("Received Ctrl+C, shutting down...");
-        r.store(false, Ordering::Relaxed);
+        r.store(false, Release);
     })?;
 
     // Run the event loop

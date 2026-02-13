@@ -53,10 +53,6 @@ impl TextImprover {
         user_text: &str,
         refine: bool,
     ) -> Result<String> {
-        if user_text.trim().is_empty() {
-            return Ok(String::new());
-        }
-
         if refine && !self.history.is_empty() {
             self.history.push(ChatMessage::user(user_text.to_string()));
         } else {

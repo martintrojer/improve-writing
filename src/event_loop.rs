@@ -1,7 +1,7 @@
 use anyhow::Result;
 use hotkey_listener::{HotkeyEvent, HotkeyListenerHandle};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering::Acquire};
 use std::time::Duration;
 
 use crate::ollama::TextImprover;
@@ -16,10 +16,13 @@ enum Mode {
 /// Check for the REDO keyword (whole word, all-caps). Returns the cleaned text
 /// with REDO stripped and whether refinement was requested.
 fn extract_refine(text: &str) -> (String, bool) {
-    let re = regex::Regex::new(r"\bREDO\b").unwrap();
-    if re.is_match(text) {
-        let cleaned = re.replace_all(text, "");
-        let cleaned = cleaned.split_whitespace().collect::<Vec<_>>().join(" ");
+    let has_redo = text.split_whitespace().any(|w| w == "REDO");
+    if has_redo {
+        let cleaned = text
+            .split_whitespace()
+            .filter(|w| *w != "REDO")
+            .collect::<Vec<_>>()
+            .join(" ");
         (cleaned, true)
     } else {
         (text.to_string(), false)
@@ -33,7 +36,7 @@ pub async fn run_event_loop(
 ) -> Result<()> {
     log::info!("Listening for hotkey... Press Ctrl+C to exit.");
 
-    while running.load(Ordering::Relaxed) {
+    while running.load(Acquire) {
         // Check for hotkey events
         match handle.recv_timeout(Duration::from_millis(100)) {
             Ok(event) => {

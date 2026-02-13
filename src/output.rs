@@ -46,38 +46,38 @@ pub async fn type_text(text: &str) -> Result<()> {
     Ok(())
 }
 
+/// Pipe text into a command's stdin.
+async fn run_stdin_command(cmd: &str, input: &str, err_ctx: &str) -> Result<()> {
+    let mut child = Command::new(cmd)
+        .stdin(Stdio::piped())
+        .spawn()
+        .context(err_ctx.to_string())?;
+
+    if let Some(mut stdin) = child.stdin.take() {
+        stdin.write_all(input.as_bytes()).await?;
+    }
+
+    child.wait().await.context(format!("{cmd} failed"))?;
+    Ok(())
+}
+
 /// Copy text to the system clipboard.
 ///
 /// - Linux: uses `wl-copy`
 /// - macOS: uses `pbcopy`
 #[cfg(target_os = "linux")]
 pub async fn copy_to_clipboard(text: &str) -> Result<()> {
-    let mut child = Command::new("wl-copy")
-        .stdin(Stdio::piped())
-        .spawn()
-        .context("Failed to run wl-copy (is wl-clipboard installed?)")?;
-
-    if let Some(mut stdin) = child.stdin.take() {
-        stdin.write_all(text.as_bytes()).await?;
-    }
-
-    child.wait().await.context("wl-copy failed")?;
-    Ok(())
+    run_stdin_command(
+        "wl-copy",
+        text,
+        "Failed to run wl-copy (is wl-clipboard installed?)",
+    )
+    .await
 }
 
 #[cfg(target_os = "macos")]
 pub async fn copy_to_clipboard(text: &str) -> Result<()> {
-    let mut child = Command::new("pbcopy")
-        .stdin(Stdio::piped())
-        .spawn()
-        .context("Failed to run pbcopy")?;
-
-    if let Some(mut stdin) = child.stdin.take() {
-        stdin.write_all(text.as_bytes()).await?;
-    }
-
-    child.wait().await.context("pbcopy failed")?;
-    Ok(())
+    run_stdin_command("pbcopy", text, "Failed to run pbcopy").await
 }
 
 /// Get selected text.
